@@ -10,7 +10,7 @@ DEBUG      = FALSE
 
 # DIM       = 2
 DIM       = 3
-USE_HYPRE = TRUE
+USE_HYPRE = FALSE
 USE_PETSC = FALSE
 
 COMP	   = gnu
