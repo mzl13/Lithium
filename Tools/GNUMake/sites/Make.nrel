@@ -1,0 +1,55 @@
+ifneq ($(which_computer),$(filter $(which_computer),peregrine eagle))
+  $(error Unknown NREL computer, $(which_computer))
+endif
+
+ifeq ($(which_computer), peregrine)
+# Use automatic CPU dispatch for max 
+# vectorization with Intel compilers
+# since Peregrine has haswell and
+# ivybridge nodes.
+  ifeq ($(COMP), intel)
+    CXXFLAGS += -axCORE-AVX2,CORE-AVX-I
+    CFLAGS   += -axCORE-AVX2,CORE-AVX-I
+    FFLAGS   += -axCORE-AVX2,CORE-AVX-I
+    F90FLAGS += -axCORE-AVX2,CORE-AVX-I
+  endif
+else ifeq ($(which_computer), eagle)
+# Eagle is homogeneous at the moment
+# so we can be very specific about arch.
+# We are not accomodating older compilers
+# that will fail with these flags.
+  ifeq ($(COMP), intel)
+    CXXFLAGS += -xSKYLAKE-AVX512
+    CFLAGS   += -xSKYLAKE-AVX512
+    FFLAGS   += -xSKYLAKE-AVX512
+    F90FLAGS += -xSKYLAKE-AVX512
+  else ifeq ($(COMP), $(filter $(COMP),gnu gcc llvm))
+    CXXFLAGS += -march=skylake-avx512 -mtune=skylake-avx512
+    CFLAGS   += -march=skylake-avx512 -mtune=skylake-avx512
+    FFLAGS   += -march=skylake-avx512 -mtune=skylake-avx512
+    F90FLAGS += -march=skylake-avx512 -mtune=skylake-avx512
+  endif
+endif
+
+ifeq ($(USE_MPI),TRUE)
+  ifeq ($(COMP), intel)
+    CXX := mpiicpc
+    CC  := mpiicc
+    FC  := mpiifort
+    F90 := mpiifort
+  else
+    CXX := mpicxx
+    CC  := mpicc
+    FC  := mpif90
+    F90 := mpif90
+    ifneq ($(findstring mpich, $(shell $(F90) -show 2>&1)),)
+      mpif90_link_flags := $(shell $(F90) -link_info)
+      LIBRARIES += $(wordlist 2,1024,$(mpif90_link_flags))
+    else ifneq ($(findstring Open MPI, $(shell $(F90) -showme:version 2>&1)),)
+      mpif90_link_flags := $(shell $(F90) -showme:link)
+      LIBRARIES += $(mpif90_link_flags)
+    else
+      $(error unknown mpi implementation)
+    endif
+  endif
+endif

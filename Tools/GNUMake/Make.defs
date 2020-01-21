@@ -1,0 +1,827 @@
+# Check python version
+my_python_version := $(word 2, $(shell python --version 2>&1))
+ifneq ($(firstword $(sort 2.7 $(my_python_version))), 2.7)
+  $(error Python >= 2.7 required! Your version is $(my_python_version))
+endif
+
+ifneq (,$(findstring ~,$(AMREX_HOME)))
+  $(warning *** AMREX_HOME string constains ~ and make will not like it. So it is replaced.)
+  AMREX_HOME := $(shell echo $(AMREX_HOME))
+endif
+
+include $(AMREX_HOME)/Tools/GNUMake/Make.machines
+
+ifdef AMREX_XSDK
+  AMREX_XSDK := $(strip $(AMREX_XSDK))
+else
+  AMREX_XSDK := FALSE
+endif
+
+ifdef PRECISION
+  PRECISION := $(strip $(PRECISION))
+else
+  PRECISION := DOUBLE
+endif
+
+ifdef DEBUG
+  DEBUG := $(strip $(DEBUG))
+else
+  DEBUG := TRUE
+endif
+
+ifdef PROFILE
+  PROFILE := $(strip $(PROFILE))
+else
+  PROFILE := FALSE
+endif
+
+ifdef TRACE_PROFILE
+  TRACE_PROFILE := $(strip $(TRACE_PROFILE))
+else
+  TRACE_PROFILE := FALSE
+endif
+ifeq ($(TRACE_PROFILE),TRUE)
+  PROFILE := TRUE
+endif
+
+ifdef COMM_PROFILE
+  COMM_PROFILE := $(strip $(COMM_PROFILE))
+else
+  COMM_PROFILE := FALSE
+endif
+ifeq ($(COMM_PROFILE),TRUE)
+  PROFILE := TRUE
+endif
+
+ifdef MEM_PROFILE
+  MEM_PROFILE := $(strip $(MEM_PROFILE))
+else
+  MEM_PROFILE := FALSE
+endif
+
+ifdef USE_PROFPARSER
+  USE_PROFPARSER := $(strip $(USE_PROFPARSER))
+else
+  USE_PROFPARSER := FALSE
+endif
+
+ifdef THIRD_PARTY_PROFILING
+  TP_PROFILING := $(strip $(THIRD_PARTY_PROFILING))
+else
+  TP_PROFILING := FALSE
+endif
+
+ifdef TEST
+  TEST := $(strip $(TEST))
+else
+  TEST := FALSE
+endif
+
+ifdef USE_ASSERTION
+  USE_ASSERTION := $(strip $(USE_ASSERTION))
+else
+  USE_ASSERTION := FALSE
+endif
+
+ifdef BOUND_CHECK
+  BOUND_CHECK := $(strip $(BOUND_CHECK))
+else
+  BOUND_CHECK := FALSE
+endif
+
+ifdef BACKTRACE
+  BACKTRACE := $(strip $(BACKTRACE))
+else
+  BACKTRACE := FALSE
+endif
+
+ifdef LAZY
+  LAZY := $(strip $(LAZY))
+else
+  LAZY := FALSE
+endif
+
+ifndef DIM
+  $(error DIM must be set)
+else
+  DIM := $(strip $(DIM))
+endif
+
+ifdef USE_MPI
+  USE_MPI := $(strip $(USE_MPI))
+else
+  USE_MPI := FALSE
+endif
+
+ifdef USE_CONDUIT
+  USE_CONDUIT := $(strip $(USE_CONDUIT))
+else
+  USE_CONDUIT := FALSE
+endif
+
+ifdef USE_ASCENT
+  USE_ASCENT := $(strip $(USE_ASCENT))
+else
+  USE_ASCENT := FALSE
+endif
+
+ifeq ($(USE_PMI), TRUE)
+  DEFINES += -DAMREX_PMI
+endif
+
+ifeq ($(USE_OMP_OFFLOAD), TRUE)
+  DEFINES += -DAMREX_OMP_OFFLOAD
+endif
+
+ifdef USE_UPCXX
+  USE_UPCXX := $(strip $(USE_UPCXX))
+else
+  USE_UPCXX := FALSE
+endif
+ifeq ($(USE_UPCXX),TRUE)
+  USE_MPI := TRUE
+endif
+
+ifdef USE_MPI3
+  USE_MPI3 := $(strip $(USE_MPI3))
+else
+  USE_MPI3 := FALSE
+endif
+ifeq ($(USE_MPI3),TRUE)
+  USE_MPI := TRUE
+endif
+
+
+ifdef USE_CUDA
+  USE_CUDA := $(strip $(USE_CUDA))
+else
+  USE_CUDA := FALSE
+endif
+
+ifdef USE_CUDA_FAST_MATH
+  USE_CUDA_FAST_MATH := $(strip $(USE_CUDA_FAST_MATH))
+else
+  USE_CUDA_FAST_MATH := TRUE
+endif
+
+ifeq ($(USE_CUDA),TRUE)
+  # Set the default CUDA architecture version.
+  CUDA_ARCH ?= 60
+
+  # Maximum number of CUDA threads per block.
+  CUDA_MAX_THREADS ?= 256
+
+  # Limit the maximum number of registers available.
+  CUDA_MAXREGCOUNT ?= 255
+endif
+
+ifdef DIMENSION_AGNOSTIC
+  DIMENSION_AGNOSTIC := $(strip $(DIMENSION_AGNOSTIC))
+else
+  DIMENSION_AGNOSTIC := FALSE
+endif
+
+ifdef USE_EB
+  USE_EB := $(strip $(USE_EB))
+else
+  USE_EB := FALSE
+endif
+
+ifdef USE_SENSEI_INSITU
+  USE_SENSEI_INSITU := $(strip $(USE_SENSEI_INSITU))
+else
+  USE_SENSEI_INSITU := FALSE
+endif
+
+ifdef EBASE
+  EBASE := $(strip $(EBASE))
+else
+  EBASE := main
+endif
+
+ifdef USE_FORCE_INLINE
+  USE_FORCE_INLINE := $(strip $(USE_FORCE_INLINE))
+else
+  USE_FORCE_INLINE := FALSE
+endif
+
+ifdef USE_GPU_PRAGMA
+  USE_GPU_PRAGMA := $(strip $(USE_GPU_PRAGMA))
+else
+  USE_GPU_PRAGMA := FALSE
+endif
+
+ifneq ($(USE_CUDA),TRUE)
+  USE_GPU_PRAGMA = FALSE
+endif
+
+ifdef GPU_ERROR_CHECK
+  GPU_ERROR_CHECK := $(strip $(GPU_ERROR_CHECK))
+else
+  GPU_ERROR_CHECK := TRUE
+endif 
+
+ifdef FAB_IS_PINNED
+  FAB_IS_PINNED := $(strip $(FAB_IS_PINNED))
+else
+  FAB_IS_PINNED := FALSE
+endif
+
+SKIP_LINKING ?= FALSE
+USE_COMPILE_PIC ?= FALSE
+
+AMREX_GIT_VERSION := $(shell cd $(AMREX_HOME); git describe --abbrev=12 --dirty --always --tags)
+DEFINES += -DAMREX_GIT_VERSION=\"$(AMREX_GIT_VERSION)\"
+
+FORTLINK  	= UNDERSCORE
+
+FORT_CPP        = cpp -E -traditional-cpp -P
+FORTPREP  	= perl $(AMREX_HOME)/Tools/C_scripts/strip72 -c
+F90PREP  	= cat  # a placeholder in case we have to write something later
+CPP_PREFIX      = 
+MKDEP		= perl $(AMREX_HOME)/Tools/C_scripts/mkdep
+MODDEP		= $(AMREX_HOME)/Tools/F_scripts/dep.py
+CHECKFORT       = $(AMREX_HOME)/Tools/typechecker/typechecker.py
+MKCONFIG        = $(AMREX_HOME)/Tools/libamrex/mkconfig.py
+
+RANLIB          = ranlib
+
+EXE_OUTPUT_OPTION      = -o $(objEXETempDir)/$*.o
+FORT_EXE_OUTPUT_OPTION = -o $(objEXETempDir)/$*.o
+
+ifeq ($(USE_CUDA),TRUE)
+  ifdef NVCC_HOST_COMP
+    AMREX_CCOMP = $(NVCC_HOST_COMP)
+  else
+    AMREX_CCOMP = gnu
+  endif
+endif
+
+lowercase_comp = $(shell echo $(COMP) | tr A-Z a-z)
+
+ifeq ($(lowercase_comp),$(filter $(lowercase_comp),gcc gnu g++))
+  lowercase_comp = gnu
+  AMREX_FCOMP ?= gnu
+  AMREX_CCOMP ?= gnu
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/gnu.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/gnu.mak
+else ifeq ($(lowercase_comp),intel)
+  AMREX_FCOMP ?= intel
+  AMREX_CCOMP ?= intel
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/intel.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/intel.mak
+else ifeq ($(lowercase_comp),cray)
+  AMREX_FCOMP ?= cray
+  AMREX_CCOMP ?= cray
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/cray.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/cray.mak
+else ifeq ($(lowercase_comp),pgi)
+  AMREX_FCOMP ?= pgi
+  AMREX_CCOMP ?= pgi
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/pgi.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/pgi.mak
+else ifeq ($(lowercase_comp),ibm)
+  AMREX_FCOMP ?= ibm
+  AMREX_CCOMP ?= ibm
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/ibm.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/ibm.mak
+else ifeq ($(lowercase_comp),$(filter $(lowercase_comp),llvm clang clang++))
+  lowercase_comp = llvm
+  AMREX_FCOMP ?= gnu
+  AMREX_CCOMP ?= clang
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/llvm.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/llvm.mak
+else ifeq ($(lowercase_comp),$(filter $(lowercase_comp),llvm-flang flang))
+  lowercase_comp = llvm-flang
+  AMREX_FCOMP ?= flang
+  AMREX_CCOMP ?= clang
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/llvm-flang.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/llvm-flang.mak
+else ifeq ($(lowercase_comp),nag)
+  AMREX_FCOMP ?= nag
+  AMREX_CCOMP ?= gnu
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/nag.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/nag.mak
+else ifeq ($(lowercase_comp),nec)
+  AMREX_FCOMP ?= nec
+  AMREX_CCOMP ?= nec
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/comps/nec.mak...)
+  include        $(AMREX_HOME)/Tools/GNUMake/comps/nec.mak
+else
+  $(error Unknown compiler $(COMP). Supported compilers are gnu, intel, cray, pgi, ibm, llvm, nag, and nec)
+endif
+
+ifeq ($(MAKECMDGOALS),check_fortran)
+  ifneq ($(lowercase_comp),gnu)
+    $(error make check_fortran only works with COMP=gnu)
+  endif
+endif
+
+ifeq ($(DEBUG),TRUE)
+    CPPFLAGS	+= -DAMREX_DEBUG
+    DebugSuffix := .DEBUG
+else
+    ifneq ($(AMREX_XSDK),TRUE)
+        CPPFLAGS += -DNDEBUG
+    endif
+    DebugSuffix :=
+endif
+
+ifeq ($(USE_PROFPARSER),TRUE)
+  PROFILE := TRUE
+  TRACE_PROFILE := TRUE
+
+  CPPFLAGS += -DBL_USE_PROFPARSER -DAMREX_USE_PROFPARSER
+  include $(AMREX_HOME)/Src/Extern/ProfParser/Make.package
+  include $(AMREX_HOME)/Src/Extern/amrdata/Make.package
+endif
+
+ifeq ($(PROFILE),TRUE)
+    CPPFLAGS    += -DBL_PROFILING -DAMREX_PROFILING
+    ifeq ($(TRACE_PROFILE)$(COMM_PROFILE),TRUETRUE)
+        CPPFLAGS    += -DBL_TRACE_PROFILING -DAMREX_TRACE_PROFILING
+        CPPFLAGS    += -DBL_COMM_PROFILING -DAMREX_COMM_PROFILING
+        ProfSuffix	:= .COMTR_PROF
+    endif
+    ifeq ($(TRACE_PROFILE)$(COMM_PROFILE),TRUEFALSE)
+        CPPFLAGS    += -DBL_TRACE_PROFILING -DAMREX_TRACE_PROFILING
+        ProfSuffix	:= .TRACE_PROF
+    endif
+    ifeq ($(TRACE_PROFILE)$(COMM_PROFILE),FALSETRUE)
+        CPPFLAGS    += -DBL_COMM_PROFILING -DAMREX_COMM_PROFILING
+        ProfSuffix	:= .COMM_PROF
+    endif
+    ifeq ($(TRACE_PROFILE)$(COMM_PROFILE),FALSEFALSE)
+        ProfSuffix	:= .PROF
+    endif
+else
+    ifndef TINY_PROFILE
+        TINY_PROFILE = FALSE
+    endif
+    ifeq ($(TINY_PROFILE),TRUE)
+        CPPFLAGS    += -DBL_TINY_PROFILING -DAMREX_TINY_PROFILING
+        ProfSuffix	:= .TPROF
+    else
+        ProfSuffix	:=
+    endif
+endif
+
+ifeq ($(MEM_PROFILE),TRUE)
+  CPPFLAGS += -DBL_MEM_PROFILING -DAMREX_MEM_PROFILING
+  MProfSuffix := .MPROF
+else
+  MProfSuffix :=
+endif
+
+ifeq ($(TEST),TRUE)
+    CPPFLAGS += -DBL_TESTING -DAMREX_TESTING
+    ifneq ($(DEBUG),TRUE)
+        DebugSuffix := .TEST
+    endif
+endif
+
+ifeq ($(BACKTRACE),TRUE)
+    CPPFLAGS += -DBL_BACKTRACING -DBL_TESTING -DAMREX_BACKTRACING -DAMREX_TESTING
+    BTSuffix := .BT
+else
+    BTSuffix :=
+endif
+
+ifdef CRAY_CPU_TARGET
+ifneq ($(USE_CUDA),TRUE)
+    archSuffix += .$(strip $(CRAY_CPU_TARGET))
+endif
+endif
+
+ifeq ($(LAZY),TRUE)
+    CPPFLAGS += -DBL_LAZY -DAMREX_LAZY
+endif
+
+ifeq ($(USE_ARRAYVIEW), TRUE)
+  DEFINES += -DBL_USE_ARRAYVIEW -DAMREX_USE_ARRAYVIEW
+  ARRAYVIEWDIR ?= $(AMREX_HOME)/../ArrayView
+  INCLUDE_LOCATIONS += $(ARRAYVIEWDIR)
+  LIBRARY_LOCATIONS += $(ARRAYVIEWDIR)
+  LIBRARIES += -larrayview$(DIM)d
+  VPATH_LOCATIONS   += $(ARRAYVIEWDIR)
+endif
+
+ifeq ($(USE_MPI),TRUE)
+    MPISuffix	:= .MPI
+    CPPFLAGS	+= -DBL_USE_MPI -DAMREX_USE_MPI
+else
+    MPISuffix	:=
+endif
+
+ifeq ($(USE_MPI3),TRUE)
+    MPISuffix := .MPI3
+    CPPFLAGS  += -DBL_USE_MPI3 -DAMREX_USE_MPI3
+endif
+
+ifeq ($(USE_UPCXX),TRUE)
+    UPCXXSuffix := .UPCXX
+    CPPFLAGS    += -DBL_USE_UPCXX -DAMREX_USE_UPCXX
+else
+    UPCXXSuffix :=
+endif
+
+ifeq ($(USE_UPCXX),TRUE)
+    CPPFLAGS  += -DBL_USE_TEAM -DAMREX_USE_TEAM
+else
+  ifeq ($(USE_MPI3),TRUE)
+    CPPFLAGS  += -DBL_USE_TEAM -DAMREX_USE_TEAM
+  endif
+endif
+
+ifeq ($(USE_OMP),TRUE)
+    OMPSuffix	:= .OMP
+    CPPFLAGS	+= -DBL_USE_OMP -DAMREX_USE_OMP
+else
+    OMPSuffix	:=
+endif
+
+ifeq ($(USE_FORCE_INLINE),TRUE)
+    CPPFLAGS += -DAMREX_USE_FORCE_INLINE
+endif
+
+USE_GPU := FALSE
+
+ifeq ($(USE_ACC),TRUE)
+
+  USE_GPU := TRUE
+  ACCSuffix := .ACC
+  DEFINES += -DAMREX_USE_ACC
+
+endif
+
+ifeq ($(USE_CUDA),TRUE)
+
+    USE_GPU := TRUE
+
+    # The CUDA implementation is not currently threadsafe.
+    # Throw an error if the user tries to build with OpenMP and CUDA.
+
+    ifeq ($(USE_OMP),TRUE)
+        $(error The CUDA implementation is not thread-safe; do not try to use OpenMP)
+    endif
+
+    ifeq ($(lowercase_comp),pgi)
+        LINK_WITH_FORTRAN_COMPILER=TRUE
+    else ifeq ($(lowercase_comp),ibm)
+        LINK_WITH_FORTRAN_COMPILER=TRUE
+    else ifeq ($(lowercase_comp),gnu)
+    else
+        $(error CUDA can only be used with COMP=pgi or ibm or gnu)
+    endif
+
+    include $(AMREX_HOME)/Tools/GNUMake/comps/nvcc.mak
+
+    ifeq ($(USE_MPI),TRUE)
+      # Make sure that the C/C++ MPI
+      # wrappers are calling nvcc to compile the code.
+      # Right now we handle OpenMPI/Spectrum MPI and MPICH.
+      # Other MPI implementations could be added later.
+
+      export OMPI_CC := nvcc
+      export OMPI_CXX := nvcc
+      export OMPI_F77 := $(FC)
+      export OMPI_FC  := $(F90)
+
+      export MPICH_CC  := nvcc
+      export MPICH_CXX := nvcc
+      export MPICH_F77 := $(FC)
+      export MPICH_FC  := $(F90)
+    endif
+
+    DEFINES += -DAMREX_USE_CUDA
+
+    ifeq ($(USE_GPU_PRAGMA),TRUE)
+        DEFINES += -DAMREX_USE_GPU_PRAGMA
+    endif
+
+    ifeq ($(FAB_IS_PINNED),TRUE)
+        DEFINES += -DAMREX_FAB_IS_PINNED
+    endif
+
+    CUDASuffix := .CUDA
+
+    ifeq ($(lowercase_comp),$(filter $(lowercase_comp),ibm pgi))
+      DEFINES += -DAMREX_LAUNCH='attributes(global)'
+      DEFINES += -DAMREX_DEVICE='attributes(device)'
+      DEFINES += -DAMREX_CUDA_FORT_GLOBAL='attributes(global)'
+      DEFINES += -DAMREX_CUDA_FORT_DEVICE='attributes(device)'
+      DEFINES += -DAMREX_CUDA_FORT_HOST='attributes(host)'
+    else
+      DEFINES += -DAMREX_LAUNCH=""
+      DEFINES += -DAMREX_DEVICE=""
+      DEFINES += -DAMREX_CUDA_FORT_GLOBAL=""
+      DEFINES += -DAMREX_CUDA_FORT_DEVICE=""
+      DEFINES += -DAMREX_CUDA_FORT_HOST=""
+    endif
+
+else
+    DEFINES += -DAMREX_LAUNCH=""
+    DEFINES += -DAMREX_DEVICE=""
+    DEFINES += -DAMREX_CUDA_FORT_GLOBAL=""
+    DEFINES += -DAMREX_CUDA_FORT_DEVICE=""
+    DEFINES += -DAMREX_CUDA_FORT_HOST=""
+
+    CUDASuffix :=
+endif
+
+ifeq ($(USE_GPU),TRUE)
+    DEFINES += -DAMREX_USE_GPU -DBL_COALESCE_FABS
+    ifeq ($(GPU_ERROR_CHECK),FALSE)
+        DEFINES += -DAMREX_GPU_NO_ERROR_CHECK
+    endif
+endif
+
+ifeq ($(USE_SINGLE_PRECISION_PARTICLES), TRUE)
+  DEFINES += -DBL_SINGLE_PRECISION_PARTICLES -DAMREX_SINGLE_PRECISION_PARTICLES
+  amrex_particle_real = float
+else
+  amrex_particle_real = double
+endif
+
+ifeq ($(PRECISION),FLOAT)
+    DEFINES += -DBL_USE_FLOAT -DAMREX_USE_FLOAT
+    PrecisionSuffix := .$(PRECISION)
+    amrex_real = float
+else
+    PrecisionSuffix :=
+    amrex_real = double
+endif
+
+objStandalone	= 	$(CEXE_sources:%.cpp=%.o)			\
+			$(cEXE_sources:%.c=%.o)				\
+			$(fEXE_sources:%.f=%.o)				\
+			$(FEXE_sources:%.F=%.o)				\
+			$(f90EXE_sources:%.f90=%.o)			\
+			$(F90EXE_sources:%.F90=%.o)
+
+objForExecs	= $(addprefix $(objEXETempDir)/, $(objStandalone))
+
+#
+# <typecheck>
+#
+objForTypeCheckAlone = 	$(fEXE_sources:%.f=%.o)				\
+			$(FEXE_sources:%.F=%.o)				\
+			$(f90EXE_sources:%.f90=%.o)			\
+			$(F90EXE_sources:%.F90=%.o)
+
+objForTypeCheck      = $(addprefix $(objEXETempDir)/, $(objForTypeCheckAlone))
+
+fortran_ir_sources_alone = $(f90EXE_sources:%.f90=%.f90.orig) \
+                           $(F90EXE_sources:%.F90=%.F90.orig) \
+                           $(fEXE_sources:%.f=%.f.orig) \
+                           $(FEXE_sources:%.F=%.F.orig)
+
+fortran_ir_sources = $(addprefix $(tmpEXETempDir)/, $(fortran_ir_sources_alone))
+
+fortran_fdecl_headers = $(filter %_f.H %_F.H,$(cEXE_headers) $(CEXE_headers) $(f90EXE_headers) $(F90EXE_headers) $(fEXE_headers) $(FEXE_headers))
+fortran_fdecl_headers_cppd = $(addprefix $(tmpEXETempDir)/, $(fortran_fdecl_headers:%.H=%-cppd.h))
+
+#
+# </typecheck>
+#
+
+DEFINES	+= -DBL_SPACEDIM=$(DIM)				\
+           -DAMREX_SPACEDIM=$(DIM)                      \
+           -DBL_FORT_USE_$(FORTLINK)			\
+           -DAMREX_FORT_USE_$(FORTLINK)			\
+           -DBL_$(shell uname)                          \
+           -DAMREX_$(shell uname)
+
+
+ifeq ($(DIMENSION_AGNOSTIC),TRUE)
+DEFINES += -DAMREX_DIMENSION_AGNOSTIC
+endif
+
+ifeq ($(DEBUG),TRUE)
+  DEFINES += -DBL_USE_ASSERTION -DAMREX_USE_ASSERTION
+else
+ifeq ($(USE_ASSERTION),TRUE)
+  DEFINES += -DBL_USE_ASSERTION -DAMREX_USE_ASSERTION
+endif
+endif
+
+ifeq ($(BOUND_CHECK),TRUE)
+  DEFINES += -DAMREX_BOUND_CHECK
+endif
+
+ifeq ($(USE_PARTICLES),TRUE)
+  DEFINES += -DAMREX_PARTICLES
+endif
+
+ifeq ($(USE_EB),TRUE)
+    DEFINES += -DAMREX_USE_EB
+endif
+
+ifeq ($(AMREX_XSDK),TRUE)
+   DEFINES += -DAMREX_XSDK
+endif
+
+CPPFLAGS	+= $(DEFINES)
+
+libraries	= $(LIBRARIES) $(XTRALIBS)
+
+LDFLAGS		+= -L. $(addprefix -L, $(LIBRARY_LOCATIONS))
+
+machineSuffix	= $(lowercase_comp)$(archSuffix)$(PrecisionSuffix)$(DebugSuffix)$(ProfSuffix)$(MProfSuffix)$(BTSuffix)$(MPISuffix)$(UPCXXSuffix)$(OMPSuffix)$(ACCSuffix)$(CUDASuffix)$(USERSuffix)
+
+optionsSuffix	= $(DIM)d.$(machineSuffix)
+
+executable	= $(addsuffix $(optionsSuffix).ex, $(EBASE))
+
+TmpBuildDir     = tmp_build_dir
+srcTempDir      = $(TmpBuildDir)/s/$(optionsSuffix).EXE
+depEXETempDir	= $(TmpBuildDir)/d/$(optionsSuffix).EXE
+objEXETempDir   = $(TmpBuildDir)/o/$(optionsSuffix).EXE
+f77EXETempDir	= $(TmpBuildDir)/f/$(optionsSuffix).EXE
+tmpEXETempDir	= $(TmpBuildDir)/t/$(optionsSuffix).EXE
+
+ifeq ($(USE_GPU_PRAGMA),TRUE)
+  includes	= -I$(srcTempDir) -I. $(addprefix -I, $(INCLUDE_LOCATIONS))
+else
+  includes	= -I. $(addprefix -I, $(INCLUDE_LOCATIONS))
+endif
+fincludes	= $(includes)
+fmoddir         = $(objEXETempDir)
+
+amrexlib = $(objEXETempDir)/libamrex.a
+
+AMREX_INSTALL_DIR ?= tmp_build_dir
+amrexLibDir = $(AMREX_INSTALL_DIR)/lib
+amrexIncludeDir = $(AMREX_INSTALL_DIR)/include
+# Do different compilers have different name convention for mod files?
+amrexFortModules = $(wildcard $(objEXETempDir)/*.mod)
+
+#
+# For source code manipulation
+#
+CSRCALL		= $(CEXE_sources) $(CEXE_headers)
+cSRCALL		= $(cEXE_sources) $(cEXE_headers)
+fSRCALL		= $(fEXE_sources) $(fEXE_headers)
+FSRCALL		= $(FEXE_sources) $(FEXE_headers)
+f90SRCALL	= $(f90EXE_sources) $(f90EXE_headers)
+F90SRCALL	= $(F90EXE_sources) $(F90EXE_headers)
+allSources	= $(CSRCALL) $(FSRCALL) $(F90SRCALL) $(cSRCALL) $(fSRCALL) $(f90SRCALL)
+
+ifeq ($(USE_CCACHE),TRUE)
+  CCACHE = ccache
+else
+  CCACHE =
+endif
+
+# place holder
+F90CACHE =
+
+ifeq ($(TP_PROFILING),VTUNE)
+  $(into Loading $(AMREX_HOME)/Tools/GNUMake/tools/Make.vtune
+  include        $(AMREX_HOME)/Tools/GNUMake/tools/Make.vtune
+endif
+
+ifeq ($(TP_PROFILING),CRAYPAT)
+  $(into Loading $(AMREX_HOME)/Tools/GNUMake/tools/Make.craypat
+  include        $(AMREX_HOME)/Tools/GNUMake/tools/Make.craypat
+endif
+
+ifeq ($(TP_PROFILING),FORGE)
+  $(into Loading $(AMREX_HOME)/Tools/GNUMake/tools/Make.forge
+  include        $(AMREX_HOME)/Tools/GNUMake/tools/Make.forge
+endif
+
+# Use Sam Williams's HPGMG
+ifeq ($(USE_HPGMG), TRUE)
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/packages/Make.hpgmg...)
+  include        $(AMREX_HOME)/Tools/GNUMake/packages/Make.hpgmg
+endif
+
+ifneq ("$(wildcard $(AMREX_HOME)/Tools/GNUMake/sites/Make.$(host_name))","")
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/sites/Make.$(host_name)...)
+  include        $(AMREX_HOME)/Tools/GNUMake/sites/Make.$(host_name)
+else
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/sites/Make.$(which_site)...)
+  include        $(AMREX_HOME)/Tools/GNUMake/sites/Make.$(which_site)
+endif
+
+ifeq ($(USE_UPCXX),TRUE)
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/Make.upcxx...)
+  include        $(AMREX_HOME)/Tools/GNUMake/Make.upcxx
+endif
+
+ifeq ($(USE_SUNDIALS_3x4x),TRUE)
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/packages/Make.sundials3...)
+  include        $(AMREX_HOME)/Tools/GNUMake/packages/Make.sundials3
+endif
+
+ifeq ($(USE_CVODE),TRUE)
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/packages/Make.cvode...)
+  include        $(AMREX_HOME)/Tools/GNUMake/packages/Make.cvode
+endif
+
+ifeq ($(USE_HYPRE),TRUE)
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/packages/Make.hypre...)
+  include        $(AMREX_HOME)/Tools/GNUMake/packages/Make.hypre
+endif
+
+ifeq ($(USE_CONDUIT),TRUE)
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/packages/Make.conduit...)
+  include        $(AMREX_HOME)/Tools/GNUMake/packages/Make.conduit
+endif
+
+ifeq ($(USE_ASCENT),TRUE)
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/packages/Make.ascent...)
+  include        $(AMREX_HOME)/Tools/GNUMake/packages/Make.ascent
+endif
+
+ifeq ($(USE_PETSC),TRUE)
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/packages/Make.petsc...)
+  include        $(AMREX_HOME)/Tools/GNUMake/packages/Make.petsc
+endif
+
+ifeq ($(USE_SENSEI_INSITU),TRUE)
+  $(into Loading $(AMREX_HOME)/Tools/GNUMake/tools/Make.sensei
+  include        $(AMREX_HOME)/Tools/GNUMake/tools/Make.sensei
+endif
+
+ifneq ("$(wildcard $(AMREX_HOME)/Tools/GNUMake/Make.local)","")
+  $(info Loading $(AMREX_HOME)/Tools/GNUMake/Make.local...)
+  include        $(AMREX_HOME)/Tools/GNUMake/Make.local
+endif
+
+ifeq ($(USE_CUDA),TRUE)
+
+    # Allow the user to specify the location of the CUDA toolkit.
+    # If they don't, check if it has been defined for one of the
+    # systems we know about.
+
+    MAKE_CUDA_PATH :=
+    ifneq ($(CUDA_PATH),)
+        MAKE_CUDA_PATH := $(CUDA_PATH)
+    else ifneq ($(SYSTEM_CUDA_PATH),)
+        MAKE_CUDA_PATH := $(SYSTEM_CUDA_PATH)
+    endif
+
+    LIBRARIES += -lcuda
+
+    ifneq ($(MAKE_CUDA_PATH),)
+        LIBRARY_LOCATIONS += $(MAKE_CUDA_PATH)/lib64
+        INCLUDE_LOCATIONS += $(MAKE_CUDA_PATH)/include
+
+        ifeq ($(PROFILE),TRUE)
+            LIBRARIES += -lnvToolsExt
+        endif
+
+        ifeq ($(TINY_PROFILE),TRUE)
+            LIBRARIES += -lnvToolsExt
+        endif
+    endif
+
+    # Bring in NVML support. This is not required,
+    # but is recommended if you do not have a solution
+    # for mapping MPI ranks to GPUs. Set the environment
+    # variable NVML_PATH to point us to the library,
+    # or set SYSTEM_NVML_PATH for your site in the build system.
+
+    MAKE_NVML_PATH :=
+
+    ifneq ($(NVML_PATH),)
+        MAKE_NVML_PATH := $(NVML_PATH)
+    else ifneq ($(SYSTEM_NVML_PATH),)
+        MAKE_NVML_PATH := $(SYSTEM_NVML_PATH)
+    endif
+
+    ifneq ($(MAKE_NVML_PATH),)
+
+       LIBRARIES += -lnvidia-ml
+       LIBRARY_LOCATIONS += $(MAKE_NVML_PATH)
+       DEFINES += -DAMREX_USE_NVML
+
+    endif
+
+    # Provide system configuration, if available.
+
+    ifdef GPUS_PER_SOCKET
+       DEFINES += -DAMREX_GPUS_PER_SOCKET=$(GPUS_PER_SOCKET)
+    endif
+
+    ifdef GPUS_PER_NODE
+       DEFINES += -DAMREX_GPUS_PER_NODE=$(GPUS_PER_NODE)
+    endif
+
+    # Set the CUDA threads define in case the user updated it.
+
+    DEFINES += -DAMREX_CUDA_MAX_THREADS=$(CUDA_MAX_THREADS)
+
+    ifneq ($(LINK_WITH_FORTRAN_COMPILER),TRUE)
+      LINKFLAGS = $(NVCC_FLAGS)
+      # we are using nvcc for linking
+      comm := ,
+      space :=
+      space +=
+      libraries := $(subst -Wl$(comm),-Xlinker=,$(libraries))
+      AMREX_LINKER = nvcc
+    endif
+
+endif

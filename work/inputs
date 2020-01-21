@@ -1,0 +1,82 @@
+max_step             = 10000000
+plot_step            = 50000
+pre_step             = 10000
+plot_pre_step        = 1000
+stop_time            = 2.0
+dt_init              = 1e-4
+dt                   = 1e-6
+start_write_plotfile = 1
+chemical_ratio       = 1
+switch_step          = 600000
+switch_enable        = 1
+
+# PROBLEM SIZE & GEOMETRY
+geometry.is_periodic = 0 0 0
+geometry.coord_sys   = 0                # 0 => cart
+geometry.prob_lo     = 0.0  0.0  0.0
+geometry.prob_hi     = 100.0  50.0  50.0
+amr.n_cell           = 128 64 64
+
+# VERBOSITY
+amr.v = 1            # verbosity in Amr
+
+# REFINEMENT
+amr.max_level       = 0       # maximum level number allowed
+amr.ref_ratio       = 2 2 2 2 # refinement ratio
+amr.blocking_factor = 8       # block factor in grid generation
+amr.max_grid_size   = 64
+amr.regrid_int      = 2       # how often to regrid
+
+# USER DEFINED PARAMETERS
+
+# INIT STATE IN LITHIUM
+
+li.itf_position         = 3                  # if x < interface: phi = 1: phi = 0;
+
+#  PHYSICAL PARAMETERS
+
+li.voltage              = -0.3               # voltage on x low end (x_hi) = 0,
+li.voltage_positive     = 0
+li.itf_mobi             = 1.26e0 #0.9375      # interfacial mobility
+li.rec_const            = 4e3                 # Reaction constant
+li.diff_sld             = 0                   # Diffusion coeff. in electrode
+li.diff_liq             = 7500                # Diffusion coeff. in electrolyte
+li.cond_sld             = 1e7                 # conductivity in electrode
+li.cond_liq             = 1.19                # conductivity in electrolyte
+li.temperature          = 300
+li.itf_thickness        = 1e0                 # Interface thickness
+li.tol_rel              = 1.e-6               # relative tolarence
+li.tol_abs              = 2.e-5               # absolute tolarence
+li.tol_bottom           = 1e-9
+li.verbose              = 0                   # input control
+li.bottom_verbose       = 0
+li.max_iter             = 100
+li.fix_inter            = 15
+li.max_coarsening_level = 15
+li.presmooth            = 0
+li.postsmooth           = 0
+li.update_pot_interval  = 1000
+
+#  PHYSICAL PARAMETERS NOT USED
+li.grad_energy_coef     = 0.01                 # Gradient energy coefficient
+li.solute_density       = 1                    # solute density in electrolyte
+li.c_s                  = 7.64e4               # site density of Li-metal
+li.c_0                  = 1.e3                 # Li+ bulk concentration
+li.ntrans               = 1                    # number of eletrons transferred
+li.c_time               = 1                    # characteristic time step
+
+
+# BOUNDARY CONDITION
+
+#  REFLECT_ODD -1
+#  INT_DIR 0
+#  REFLECT_EVEN 1
+#  FOEXTRAP  2
+#  EXT_DIR 3
+#  HOEXTRAP 4
+
+li.bc_lo = 3 2 2
+li.bc_hi = 3 2 2
+
+
+

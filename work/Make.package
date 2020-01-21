@@ -1,0 +1,6 @@
+CEXE_sources += main.cpp Lithium.cpp
+
+CEXE_headers += Lithium.H Lithium_F.H
+
+F90EXE_sources += init.F90 advance.F90 tool_F.F90 AMReX_user_filcc_mod.F90
+
