@@ -9,7 +9,7 @@ PROFILE    = FALSE
 DEBUG      = FALSE
 
 # DIM       = 2
-DIM       = 3
+DIM       = 2
 USE_HYPRE = FALSE
 USE_PETSC = FALSE
 

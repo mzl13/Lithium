@@ -37,7 +37,7 @@ module init_module
                 do i = mf_lo(1), mf_hi(1)
                     x = prob_lo(1) + (dble(i)+0.5d0) * dx(1)
 
-                    mf(i, j, k) = 0.5 * ( tanh((itf_position - x + 1.5 * noise(i, j, k)) * 1.5) + 1)
+                    mf(i, j, k) = 0.5 * ( tanh((itf_position - x + 2.25 * noise(i, j, k))) + 1)
                     ! mf(i, j, k) = 0.5 * ( tanh((itf_position - x + 1.5 * noise(i, j, k) + 5.0 * sin(2 * (y + z) * 3.14159 / 20.0) ) * 1.5) + 1)
 
                     ! if (x .le. 10) then 

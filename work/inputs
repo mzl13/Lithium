@@ -1,4 +1,4 @@
-max_step             = 10000000
+max_step             = 1
 plot_step            = 50000
 pre_step             = 10000
 plot_pre_step        = 1000
@@ -14,8 +14,8 @@ switch_enable        = 1
 geometry.is_periodic = 0 0 0
 geometry.coord_sys   = 0                # 0 => cart
 geometry.prob_lo     = 0.0  0.0  0.0
-geometry.prob_hi     = 100.0  50.0  50.0
-amr.n_cell           = 128 64 64
+geometry.prob_hi     = 100.0  100.0  50.0
+amr.n_cell           = 128 128 64
 
 # VERBOSITY
 amr.v = 1            # verbosity in Amr

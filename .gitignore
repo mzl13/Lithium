@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+
+work/CAL_DATA/*
+work/Lithium2d.gnu.MPI.ex
+*.pyc
+*.zip
+.DS_Store
+Tools/F_scripts/preprocess.pyc
