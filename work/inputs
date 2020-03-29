@@ -1,6 +1,6 @@
-max_step             = 1
-plot_step            = 50000
-pre_step             = 10000
+max_step             = 500000
+plot_step            = 100000
+pre_step             = 0
 plot_pre_step        = 1000
 stop_time            = 2.0
 dt_init              = 1e-4

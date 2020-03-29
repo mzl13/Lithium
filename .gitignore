@@ -37,3 +37,4 @@ work/Lithium2d.gnu.MPI.ex
 *.zip
 .DS_Store
 Tools/F_scripts/preprocess.pyc
+work/Lithium3d.gnu.MPI.ex
