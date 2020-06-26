@@ -11,7 +11,7 @@ mpich
 
 
 Tools:
-VisIt: Visualization
+VisIt: Visualization;
 Python: Script tool
 
 
