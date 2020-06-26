@@ -6,7 +6,7 @@ Ubuntu 18.04 LTS
 
 
 Dependence:
-Make(gcc)
+Make(gcc);
 mpich
 
 
