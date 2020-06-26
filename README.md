@@ -15,7 +15,7 @@ VisIt: Visualization;
 Python: Script tool
 
 
-How to cite the article, [![Citing](https://img.shields.io/badge/{EnSM}-{10.1016/j.ensm.2020.04.011}-{orange}.svg
+How to cite the article, [![Citing](https://img.shields.io/badge/EnSM-10.1016/j.ensm.2020.04.011-orange.svg
 )](https://doi.org/10.1016/j.ensm.2020.04.011):
 ```
   @article{mu2020simulation,
