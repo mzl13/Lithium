@@ -15,8 +15,12 @@ Python: Script tool
 How to cite
 @article{mu2020simulation,
   title={Simulation of 3-D lithium dendritic evolution under multiple electrochemical states: A parallel phase field approach},
+  
   author={Mu, Zhenliang and Guo, Zhipeng and Lin, Yuan-Hua},  
+  
   journal={Energy Storage Materials},
+  
   year={2020},
+  
   publisher={Elsevier}
 }
