@@ -2,21 +2,16 @@
 A phase field method for lithium dendrite based on AMReX.
 
 OS:
-
 Ubuntu 18.04 LTS
 
 
 Dependence:
-
 Make(gcc)
-
 mpich
 
 
 Tools:
-
 VisIt: Visualization
-
 Python: Script tool
 
 
