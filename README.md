@@ -23,7 +23,8 @@ How to cite the article, [![Citing](https://img.shields.io/badge/EnSM-10.1016/j.
     author={Mu, Zhenliang and Guo, Zhipeng and Lin, Yuan-Hua},  
     journal={Energy Storage Materials},
     year={2020},
-    publisher={Elsevier}
+    publisher={Elsevier},
+    DOI={10.1016/j.ensm.2020.04.011}
   }
 ```
 
