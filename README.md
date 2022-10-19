@@ -28,4 +28,4 @@ How to cite the article, [![Citing](https://img.shields.io/badge/EnSM-10.1016/j.
   }
 ```
 
-Any Problem -> mzl13#qq.com (replace # by @)
+Any Problem -> mzl13.cn#gmail.com (replace # by @)
